@@ -1,0 +1,2 @@
+[35msrc/components/ProsContent.tsx[m[36m:[m[32m5[m[36m:[mimport { [1;31museSearchParams[m } from "next/navigation";
+[35msrc/components/ProsContent.tsx[m[36m:[m[32m15[m[36m:[m  const searchParams = [1;31museSearchParams[m();
