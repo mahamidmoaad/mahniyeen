@@ -1,32 +1,72 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+"use client";
 
-export default function CreateJob({ searchParams }: any) {
-  const [title, setTitle] = useState('');
-  const [desc, setDesc]   = useState('');
-  const [city, setCity]   = useState('');
-  const proId = searchParams?.pro ?? null;
+import { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-  async function submit() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { alert('سجّل الدخول أولاً'); return; }
-    const uid = session.user.id;
-    const { error } = await supabase.from('job_requests').insert([{
-      customer_id: uid,
-      title, description: desc, city,
-      assigned_pro_id: proId
-    }]);
-    if (error) alert(error.message); else alert('تم إنشاء الطلب');
-  }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export default function CreateJobPage() {
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // 1) إضافة الطلب في جدول jobs
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert([{ description }])
+      .select();
+
+    if (error) {
+      console.error("Error inserting job:", error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const newJob = data[0];
+
+      // 2) إرسال إيميل إشعار (مؤقتًا لبريد واحد للتجربة)
+      try {
+        await fetch("/api/send-new-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "test@example.com", // 👈 غيرها لإيميلك للتجربة
+            jobSummary: description,
+            jobLink: `https://mahniyeen-mu.vercel.app/dashboard/jobs/${newJob.id}`,
+          }),
+        });
+        console.log("Email notification sent!");
+      } catch (err) {
+        console.error("Failed to send email:", err);
+      }
+    }
+
+    setDescription("");
+    setLoading(false);
+  };
 
   return (
-    <div className="container mx-auto p-6 max-w-md">
-      <h1 className="text-xl font-bold">إنشاء طلب</h1>
-      <input className="w-full p-2 border mt-3" placeholder="عنوان" value={title} onChange={e=>setTitle(e.target.value)} />
-      <textarea className="w-full p-2 border mt-3" placeholder="وصف" value={desc} onChange={e=>setDesc(e.target.value)} />
-      <input className="w-full p-2 border mt-3" placeholder="المدينة" value={city} onChange={e=>setCity(e.target.value)} />
-      <button onClick={submit} className="mt-4 bg-black text-white px-4 py-2 rounded">أرسل</button>
-    </div>
+    <form onSubmit={handleSubmit} className="p-4">
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="اكتب وصف الطلب..."
+        className="w-full border p-2 mb-4"
+      />
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        {loading ? "جارٍ الإرسال..." : "إرسال الطلب"}
+      </button>
+    </form>
   );
 }
