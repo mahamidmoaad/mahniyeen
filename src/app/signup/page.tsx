@@ -12,6 +12,7 @@ const supabase = createClient(
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("customer"); // 👈 افتراضي زبون
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -19,7 +20,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -27,6 +28,14 @@ export default function SignupPage() {
     if (error) {
       alert("خطأ: " + error.message);
     } else {
+      // 1) خزّن الدور في profiles
+      const userId = data.user?.id;
+      if (userId) {
+        await supabase.from("profiles").insert([
+          { id: userId, role },
+        ]);
+      }
+
       alert("تم إنشاء الحساب! سجل الدخول الآن.");
       router.push("/login");
     }
@@ -51,6 +60,16 @@ export default function SignupPage() {
         onChange={(e) => setPassword(e.target.value)}
         className="border p-2 w-full mb-2"
       />
+
+      <select
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+        className="border p-2 w-full mb-2"
+      >
+        <option value="customer">زبون 👤</option>
+        <option value="pro">مهني 👷</option>
+      </select>
+
       <button
         type="submit"
         disabled={loading}
