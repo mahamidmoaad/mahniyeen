@@ -13,13 +13,10 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",                     // 👈 أضف هذا السطر
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"]                  // 👈 تأكد إنها هيك بالضبط
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
