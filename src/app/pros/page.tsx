@@ -1,5 +1,5 @@
 // src/app/pros/page.tsx
-'use client'
+"use client";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import ProCard from '@/components/ProCard';
