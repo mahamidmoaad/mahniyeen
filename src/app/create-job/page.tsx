@@ -31,23 +31,18 @@ export default function CreateJobPage() {
     if (data && data.length > 0) {
       const newJob = data[0];
 
-      // 2) إرسال إيميل إشعار (مؤقتًا لبريد واحد للتجربة)
-      try {
-        await fetch("/api/send-new-job", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: "test@example.com", // 👈 غيرها لإيميلك للتجربة
-            jobSummary: description,
-            jobLink: `https://mahniyeen-mu.vercel.app/dashboard/jobs/${newJob.id}`,
-          }),
-        });
-        console.log("Email notification sent!");
-      } catch (err) {
-        console.error("Failed to send email:", err);
-      }
+      // بعد حصول newJob
+    try {
+      await fetch('/api/send-job-to-pros', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: newJob.id }),
+      });
+    } catch (err) {
+      console.error('notify pros failed', err);
     }
-
+    }
+      
     setDescription("");
     setLoading(false);
   };
