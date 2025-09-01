@@ -1,3 +1,4 @@
+// src/app/pro/[id]/page.tsx
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 
@@ -12,7 +13,12 @@ type Pro = {
   city_name: string | null;
 };
 
-export default async function ProDetail({ params }: { params: { id: string } }) {
+// استخدم type PageProps من Next.js
+interface PageProps {
+  params: { id: string };
+}
+
+export default async function ProDetail({ params }: PageProps) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -22,10 +28,10 @@ export default async function ProDetail({ params }: { params: { id: string } }) 
     .from("pros_public")
     .select("*")
     .eq("id", params.id)
-    .maybeSingle();
+    .single();
 
   if (error || !data) {
-    return <div className="card p-6">المهني غير موجود.</div>;
+    return <div className="card">المهني غير موجود.</div>;
   }
 
   const p = data as Pro;

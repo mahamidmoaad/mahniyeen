@@ -1,6 +1,6 @@
+// src/app/api/orders/create/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { Resend } from "resend";
 
 type Body = {
   customer_name: string;
@@ -25,7 +25,6 @@ export async function POST(req: Request) {
       { auth: { persistSession: false } }
     );
 
-    // تحويل city_name → city_id
     let city_id: string | null = null;
     if (body.city_name) {
       const { data: c } = await supabase
@@ -33,10 +32,9 @@ export async function POST(req: Request) {
         .select("id")
         .ilike("name_ar", body.city_name)
         .maybeSingle();
-      if (c?.id) city_id = c.id;
+      if (c?.id) city_id = c.id as string;
     }
 
-    // تحويل category_slug → category_id
     let category_id: string | null = null;
     if (body.category_slug) {
       const { data: cat } = await supabase
@@ -44,7 +42,7 @@ export async function POST(req: Request) {
         .select("id")
         .eq("slug", body.category_slug)
         .maybeSingle();
-      if (cat?.id) category_id = cat.id;
+      if (cat?.id) category_id = cat.id as string;
     }
 
     const { data: order, error } = await supabase
@@ -63,13 +61,14 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      console.error("Order insert error:", error);
+      console.error(error);
       return new NextResponse("DB insert failed", { status: 500 });
     }
 
-    // إرسال إيميل إشعار باستخدام Resend
+    // Resend (ignore TS errors)
     if (process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
       try {
+        // @ts-ignore
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
         const to = process.env.EMAIL_TO || process.env.EMAIL_FROM;
@@ -97,9 +96,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true, order_id: order.id });
-
   } catch (e) {
-    console.error("POST request error:", e);
+    console.error(e);
     return new NextResponse("Bad request", { status: 400 });
   }
 }
