@@ -13,10 +13,10 @@ type Pro = {
   city_name: string | null;
 };
 
-// استخدم type PageProps من Next.js
-interface PageProps {
+// اجعل النوع مطابق لتوقيع Next.js
+type PageProps = {
   params: { id: string };
-}
+};
 
 export default async function ProDetail({ params }: PageProps) {
   const supabase = createClient(

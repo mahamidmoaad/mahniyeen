@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       return new NextResponse("DB insert failed", { status: 500 });
     }
 
-    // Resend (ignore TS errors)
+    // إرسال الإيميل باستخدام dynamic import لتجنب مشكلة build
     if (process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
       try {
         // @ts-ignore
