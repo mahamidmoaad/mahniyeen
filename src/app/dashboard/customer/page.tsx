@@ -1,52 +1,33 @@
-// src/app/dashboard/customer/page.tsx
-"use client";
-import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-type Order = {
-  id: string; description: string; status: string; created_at: string;
-};
+export default async function CustomerDashboardPage() {
+  const { data: requests, error } = await supabase
+    .from("requests")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-export default function CustomerDashboard() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  if (error) {
+    return <div className="p-4 text-red-500">خطأ أثناء جلب الطلبات</div>;
+  }
 
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data } = await supabase
-        .from("orders")
-        .select("id, description, status, created_at")
-        .eq("customer_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setOrders((data as any) || []);
-    })();
-  }, []);
-
-  if (!userId) {
-    return <div className="card">الرجاء تسجيل الدخول لعرض طلباتك.</div>;
+  if (!requests || requests.length === 0) {
+    return <div className="p-4 text-gray-500">لا يوجد طلبات حتى الآن</div>;
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">طلباتك</h1>
-      {!orders.length ? (
-        <div className="card">لا توجد طلبات بعد.</div>
-      ) : (
-        <div className="grid gap-3">
-          {orders.map(o => (
-            <div key={o.id} className="card">
-              <div className="text-sm text-gray-500">{new Date(o.created_at).toLocaleString()}</div>
-              <div className="font-semibold mt-1">{o.description}</div>
-              <div className="text-xs text-gray-500 mt-1">الحالة: {o.status}</div>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">لوحة العميل</h1>
+      <ul className="space-y-3">
+        {requests.map((req) => (
+          <li
+            key={req.id}
+            className="p-4 border rounded-xl shadow hover:shadow-lg transition"
+          >
+            <p className="font-semibold">الخدمة: {req.service_name}</p>
+            <p className="text-gray-600">الحالة: {req.status}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

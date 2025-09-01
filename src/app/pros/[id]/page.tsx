@@ -1,32 +1,27 @@
-// src/app/pros/[id]/page.tsx
-import React from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 
-interface PageParams {
-  id: string;
-}
+type PageProps = {
+  params: Promise<{ id: string }>; // ✅ هيك Next.js مبسوط
+};
 
-// Server Component
-export default async function ProPage({ params }: { params: PageParams }) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+export default async function ProPage({ params }: PageProps) {
+  const { id } = await params; // ✅ لازم await
 
   const { data: pro, error } = await supabase
-    .from("pros_public")
+    .from("pros")
     .select("*")
-    .eq("id", params.id)
-    .maybeSingle();
+    .eq("id", id)
+    .single();
 
-  if (error) return <div>حدث خطأ: {error.message}</div>;
-  if (!pro) return <div>المهني غير موجود.</div>;
+  if (error || !pro) {
+    return <div className="p-4 text-red-500">المحترف غير موجود</div>;
+  }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">{pro.full_name}</h1>
-      <p className="text-gray-700">{pro.bio}</p>
-      <p className="mt-2 text-sm text-gray-500">البريد الإلكتروني: {pro.email}</p>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold">{pro.name}</h1>
+      <p className="mt-2 text-gray-600">{pro.description}</p>
+      {pro.phone && <p className="mt-2 text-gray-500">📞 {pro.phone}</p>}
     </div>
   );
 }

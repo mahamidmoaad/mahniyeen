@@ -1,52 +1,33 @@
-// src/app/dashboard/pro/page.tsx
-"use client";
-import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-type Order = {
-  id: string; description: string; status: string; created_at: string;
-};
+export default async function ProDashboardPage() {
+  const { data: jobs, error } = await supabase
+    .from("jobs")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-export default function ProDashboard() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  if (error) {
+    return <div className="p-4 text-red-500">خطأ أثناء جلب الأعمال</div>;
+  }
 
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data } = await supabase
-        .from("orders")
-        .select("id, description, status, created_at")
-        .eq("pro_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setOrders((data as any) || []);
-    })();
-  }, []);
-
-  if (!userId) {
-    return <div className="card">الرجاء تسجيل الدخول لعرض الطلبات المُوجّهة إليك.</div>;
+  if (!jobs || jobs.length === 0) {
+    return <div className="p-4 text-gray-500">لا يوجد أعمال حتى الآن</div>;
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">طلبات مُوجّهة إليك</h1>
-      {!orders.length ? (
-        <div className="card">لا يوجد طلبات حالياً.</div>
-      ) : (
-        <div className="grid gap-3">
-          {orders.map(o => (
-            <div key={o.id} className="card">
-              <div className="text-sm text-gray-500">{new Date(o.created_at).toLocaleString()}</div>
-              <div className="font-semibold mt-1">{o.description}</div>
-              <div className="text-xs text-gray-500 mt-1">الحالة: {o.status}</div>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">لوحة المحترف</h1>
+      <ul className="space-y-3">
+        {jobs.map((job) => (
+          <li
+            key={job.id}
+            className="p-4 border rounded-xl shadow hover:shadow-lg transition"
+          >
+            <p className="font-semibold">العنوان: {job.title}</p>
+            <p className="text-gray-600">الوصف: {job.description}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
