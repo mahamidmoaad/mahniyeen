@@ -1,16 +1,17 @@
-// src/app/pro/[id]/page.tsx
+// src/app/pros/[id]/page.tsx
 import { createClient } from "@supabase/supabase-js";
 
-type PageProps = {
-  params: { id: string };
+type Params = {
+  id: string;
 };
 
-export default async function ProDetail({ params }: PageProps) {
+export default async function ProPage({ params }: { params: Params }) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // جلب البيانات من قاعدة البيانات
   const { data: pro } = await supabase
     .from("pros_public")
     .select("*")
