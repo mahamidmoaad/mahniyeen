@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
+import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -21,18 +22,20 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/dashboard");
+      setSuccess("تم إنشاء الحساب بنجاح، يرجى التحقق من بريدك الإلكتروني");
+      router.push("/auth/login");
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleSignup}
         className="w-full max-w-sm rounded-xl bg-white p-6 shadow-md"
       >
-        <h2 className="mb-4 text-2xl font-bold">تسجيل الدخول</h2>
+        <h2 className="mb-4 text-2xl font-bold">إنشاء حساب جديد</h2>
         {error && <p className="mb-2 text-red-500">{error}</p>}
+        {success && <p className="mb-2 text-green-500">{success}</p>}
 
         <input
           type="email"
@@ -51,9 +54,9 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full rounded-md bg-blue-600 py-2 text-white hover:bg-blue-700"
+          className="w-full rounded-md bg-green-600 py-2 text-white hover:bg-green-700"
         >
-          دخول
+          تسجيل
         </button>
       </form>
     </div>
