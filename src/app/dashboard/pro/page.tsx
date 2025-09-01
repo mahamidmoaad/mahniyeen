@@ -1,33 +1,52 @@
+// src/app/dashboard/pro/page.tsx
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
+
+type Order = {
+  id: string; description: string; status: string; created_at: string;
+};
 
 export default function ProDashboard() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchOrders();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      const { data } = await supabase
+        .from("orders")
+        .select("id, description, status, created_at")
+        .eq("pro_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setOrders((data as any) || []);
+    })();
   }, []);
 
-  async function fetchOrders() {
-    const { data } = await supabase.from("orders").select("*").eq("role", "pro");
-    setOrders(data || []);
+  if (!userId) {
+    return <div className="card">الرجاء تسجيل الدخول لعرض الطلبات المُوجّهة إليك.</div>;
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">لوحة المهني</h1>
-      <ul className="mt-4 space-y-2">
-        {orders.map((order) => (
-          <li key={order.id} className="border p-2 rounded">
-            {order.service} - {order.status}
-            <div className="mt-2 space-x-2">
-              <button className="bg-blue-500 text-white px-2 py-1 rounded">قبول</button>
-              <button className="bg-red-500 text-white px-2 py-1 rounded">رفض</button>
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold">طلبات مُوجّهة إليك</h1>
+      {!orders.length ? (
+        <div className="card">لا يوجد طلبات حالياً.</div>
+      ) : (
+        <div className="grid gap-3">
+          {orders.map(o => (
+            <div key={o.id} className="card">
+              <div className="text-sm text-gray-500">{new Date(o.created_at).toLocaleString()}</div>
+              <div className="font-semibold mt-1">{o.description}</div>
+              <div className="text-xs text-gray-500 mt-1">الحالة: {o.status}</div>
             </div>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

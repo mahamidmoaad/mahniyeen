@@ -1,32 +1,44 @@
 // src/app/page.tsx
-"use client";
+import Link from "next/link";
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import CategoryCard from '@/components/CategoryCard';
-import Link from 'next/link';
-
-export default function Home() {
-  const [cats, setCats] = useState<any[]>([]);
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.from('categories').select('*').order('name_ar');
-      setCats(data || []);
-    })();
-  }, []);
+export default function HomePage() {
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">ابحث عن مهنيين بالقرب منك</h1>
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        {cats.map(c => <CategoryCard key={c.id} cat={c} />)}
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-3">الأكثر طلبًا</h2>
-        <div className="grid md:grid-cols-3 gap-4">
-          <Link href="/pros" className="p-6 bg-white rounded shadow text-right">كل الخدمات</Link>
+    <div className="space-y-10">
+      <section className="card p-8 flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">لنوصّلك بأفضل مهنيين حولك 🔧</h1>
+        <p className="text-gray-600">
+          كهربائي، سباك، نجّار، دهّان.. اطلب خدمتك بثواني وخلي الباقي علينا.
+        </p>
+        <div className="flex gap-3">
+          <Link href="/request" className="btn">اطلب خدمة الآن</Link>
+          <Link href="/pros" className="btn bg-gray-900 hover:bg-black">تصفّح المهنيين</Link>
         </div>
-      </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold">تصنيفات شائعة</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { name: "كهربائي", slug: "electrician" },
+            { name: "سباك", slug: "plumber" },
+            { name: "نجار", slug: "carpenter" },
+            { name: "دهّان", slug: "painter" },
+            { name: "تبريد وتكييف", slug: "hvac" },
+            { name: "ألمنيوم", slug: "aluminum" },
+            { name: "حداد", slug: "blacksmith" },
+            { name: "بلاط", slug: "tiler" },
+          ].map((c) => (
+            <Link
+              key={c.slug}
+              href={`/pros?cat=${c.slug}`}
+              className="card text-center hover:shadow-md"
+            >
+              <div className="font-semibold">{c.name}</div>
+              <div className="text-xs text-gray-500 mt-1">اعثر على مهنيين</div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
-  )
+  );
 }

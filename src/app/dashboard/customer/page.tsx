@@ -1,30 +1,52 @@
+// src/app/dashboard/customer/page.tsx
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
+
+type Order = {
+  id: string; description: string; status: string; created_at: string;
+};
 
 export default function CustomerDashboard() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchOrders();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      const { data } = await supabase
+        .from("orders")
+        .select("id, description, status, created_at")
+        .eq("customer_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setOrders((data as any) || []);
+    })();
   }, []);
 
-  async function fetchOrders() {
-    const { data } = await supabase.from("orders").select("*").eq("role", "customer");
-    setOrders(data || []);
+  if (!userId) {
+    return <div className="card">الرجاء تسجيل الدخول لعرض طلباتك.</div>;
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">لوحة الزبون</h1>
-      <button className="bg-green-500 text-white px-4 py-2 rounded">طلب خدمة جديد</button>
-      <ul className="mt-4 space-y-2">
-        {orders.map((order) => (
-          <li key={order.id} className="border p-2 rounded">
-            {order.service} - {order.status}
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold">طلباتك</h1>
+      {!orders.length ? (
+        <div className="card">لا توجد طلبات بعد.</div>
+      ) : (
+        <div className="grid gap-3">
+          {orders.map(o => (
+            <div key={o.id} className="card">
+              <div className="text-sm text-gray-500">{new Date(o.created_at).toLocaleString()}</div>
+              <div className="font-semibold mt-1">{o.description}</div>
+              <div className="text-xs text-gray-500 mt-1">الحالة: {o.status}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
