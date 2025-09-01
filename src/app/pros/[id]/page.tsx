@@ -8,17 +8,12 @@ interface PageParams {
 }
 
 // Server Component
-export default async function ProPage({
-  params,
-}: {
-  params: PageParams;
-}) {
+export default async function ProPage({ params }: { params: PageParams }) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // جلب بيانات المهني حسب ID
   const { data: pro, error } = await supabase
     .from("pros_public")
     .select("*")
