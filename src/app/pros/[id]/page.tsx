@@ -2,7 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import React from "react";
 
-// تعريف النوع الصحيح للـ params
+// نوع params الصحيح
 interface PageParams {
   id: string;
 }
@@ -13,26 +13,20 @@ export default async function ProPage({
 }: {
   params: PageParams;
 }) {
-  // تهيئة Supabase Client
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // جلب بيانات المهني حسب id
+  // جلب بيانات المهني حسب ID
   const { data: pro, error } = await supabase
     .from("pros_public")
     .select("*")
     .eq("id", params.id)
     .maybeSingle();
 
-  if (error) {
-    return <div>حدث خطأ أثناء جلب البيانات: {error.message}</div>;
-  }
-
-  if (!pro) {
-    return <div>المهني غير موجود.</div>;
-  }
+  if (error) return <div>حدث خطأ: {error.message}</div>;
+  if (!pro) return <div>المهني غير موجود.</div>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
