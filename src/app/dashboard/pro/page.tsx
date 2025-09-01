@@ -1,43 +1,30 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/utils/supabaseClient";
 
 export default function ProDashboard() {
-  const [user, setUser] = useState<any>(null);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const router = useRouter();
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.push("/login");
-      setUser(user);
+    fetchOrders();
+  }, []);
 
-      // المهني يشوف كل الطلبات
-      const { data } = await supabase.from("jobs").select("*");
-      setJobs(data || []);
-    };
-    fetchData();
-  }, [router]);
+  async function fetchOrders() {
+    const { data } = await supabase.from("orders").select("*").eq("role", "pro");
+    setOrders(data || []);
+  }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl">لوحة المهني</h1>
-      <h2 className="mt-6 text-xl">جميع الطلبات</h2>
-      <ul>
-        {jobs.map((job) => (
-          <li key={job.id} className="border p-2 my-2">
-            {job.description}
-            <button className="bg-green-600 text-white px-2 py-1 ml-2 rounded">
-              قدّم عرض
-            </button>
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">لوحة المهني</h1>
+      <ul className="mt-4 space-y-2">
+        {orders.map((order) => (
+          <li key={order.id} className="border p-2 rounded">
+            {order.service} - {order.status}
+            <div className="mt-2 space-x-2">
+              <button className="bg-blue-500 text-white px-2 py-1 rounded">قبول</button>
+              <button className="bg-red-500 text-white px-2 py-1 rounded">رفض</button>
+            </div>
           </li>
         ))}
       </ul>

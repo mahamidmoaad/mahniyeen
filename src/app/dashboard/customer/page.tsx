@@ -1,44 +1,27 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/utils/supabaseClient";
 
 export default function CustomerDashboard() {
-  const [user, setUser] = useState<any>(null);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const router = useRouter();
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.push("/login");
-      setUser(user);
+    fetchOrders();
+  }, []);
 
-      // استرجاع الطلبات الخاصة بالمستخدم
-      const { data } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("customer_id", user.id);
-      setJobs(data || []);
-    };
-    fetchData();
-  }, [router]);
+  async function fetchOrders() {
+    const { data } = await supabase.from("orders").select("*").eq("role", "customer");
+    setOrders(data || []);
+  }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl">لوحة الزبون</h1>
-      <a href="/create-job" className="bg-blue-600 text-white px-4 py-2 rounded">أرسل طلب جديد</a>
-      <h2 className="mt-6 text-xl">طلباتي</h2>
-      <ul>
-        {jobs.map((job) => (
-          <li key={job.id} className="border p-2 my-2">
-            {job.description}
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">لوحة الزبون</h1>
+      <button className="bg-green-500 text-white px-4 py-2 rounded">طلب خدمة جديد</button>
+      <ul className="mt-4 space-y-2">
+        {orders.map((order) => (
+          <li key={order.id} className="border p-2 rounded">
+            {order.service} - {order.status}
           </li>
         ))}
       </ul>

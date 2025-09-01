@@ -1,23 +1,46 @@
-'use client';
-import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+"use client";
+import { useState } from "react";
+import { supabase } from "@/utils/supabaseClient";
+import { useRouter } from "next/navigation";
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [msg, setMsg] = useState('');
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  async function send() {
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) setMsg(error.message);
-    else setMsg('تم إرسال رابط/رمز الدخول إلى بريدك.');
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      alert(error.message);
+    } else {
+      router.push("/dashboard");
+    }
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-bold">تسجيل الدخول</h1>
-      <input className="w-full p-2 border mt-3" value={email} onChange={e=>setEmail(e.target.value)} placeholder="البريد الإلكتروني" />
-      <button onClick={send} className="mt-3 bg-black text-white px-4 py-2 rounded">أرسل</button>
-      {msg && <p className="mt-2 text-sm">{msg}</p>}
+    <div className="flex justify-center items-center h-screen">
+      <form onSubmit={handleLogin} className="p-6 bg-white rounded shadow w-96 space-y-4">
+        <h1 className="text-xl font-bold">تسجيل الدخول</h1>
+        <input
+          type="email"
+          placeholder="البريد الإلكتروني"
+          className="w-full border p-2 rounded"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="كلمة المرور"
+          className="w-full border p-2 rounded"
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
+          دخول
+        </button>
+      </form>
     </div>
   );
 }
