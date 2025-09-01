@@ -1,8 +1,7 @@
 // src/app/pros/[id]/page.tsx
-import { createClient } from "@supabase/supabase-js";
 import React from "react";
+import { createClient } from "@supabase/supabase-js";
 
-// نوع params الصحيح
 interface PageParams {
   id: string;
 }
