@@ -1,4 +1,3 @@
-// src/app/api/orders/create/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -19,14 +18,13 @@ export async function POST(req: Request) {
       return new NextResponse("Missing fields", { status: 400 });
     }
 
-    // إنشاء عميل Service Role (سيرفر فقط)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE!, // سيرفر فقط
+      process.env.SUPABASE_SERVICE_ROLE!,
       { auth: { persistSession: false } }
     );
 
-    // تحويل city_name → city_id (إن وجد)
+    // تحويل city_name → city_id
     let city_id: string | null = null;
     if (body.city_name) {
       const { data: c } = await supabase
@@ -34,10 +32,10 @@ export async function POST(req: Request) {
         .select("id")
         .ilike("name_ar", body.city_name)
         .maybeSingle();
-      if (c?.id) city_id = c.id as string;
+      if (c?.id) city_id = c.id;
     }
 
-    // تحويل category_slug → category_id (إن وجد)
+    // تحويل category_slug → category_id
     let category_id: string | null = null;
     if (body.category_slug) {
       const { data: cat } = await supabase
@@ -45,14 +43,13 @@ export async function POST(req: Request) {
         .select("id")
         .eq("slug", body.category_slug)
         .maybeSingle();
-      if (cat?.id) category_id = cat.id as string;
+      if (cat?.id) category_id = cat.id;
     }
 
-    // إدخال الطلب
     const { data: order, error } = await supabase
       .from("orders")
       .insert([{
-        customer_id: null, // بدون تسجيل
+        customer_id: null,
         customer_name: body.customer_name,
         customer_phone: body.customer_phone,
         city_id,
@@ -65,11 +62,11 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      console.error(error);
+      console.error("Order insert error:", error);
       return new NextResponse("DB insert failed", { status: 500 });
     }
 
-    // (اختياري) إرسال إيميل إشعار
+    // إرسال إيميل إشعار باستخدام Resend
     if (process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
       try {
         const { Resend } = await import("resend");
@@ -99,8 +96,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true, order_id: order.id });
+
   } catch (e) {
-    console.error(e);
+    console.error("POST request error:", e);
     return new NextResponse("Bad request", { status: 400 });
   }
 }
