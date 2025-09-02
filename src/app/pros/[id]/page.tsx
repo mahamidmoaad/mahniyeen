@@ -1,22 +1,29 @@
 // src/app/pros/[id]/page.tsx
 import { supabase } from "@/lib/supabaseClient";
+import { notFound } from "next/navigation";
 
-export default async function ProPage({ params }: { params: { id: string } }) {
-  // إذا واجهت خطأ typing مع Next15 غيّر التوقيع إلى:
-  // export default async function ProPage({ params }: { params: Promise<{id:string}> }) { const { id } = await params; ... }
-  const id = (params as any).id;
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
 
-  const { data: pro, error } = await supabase.from("pros").select("*").eq("id", id).single();
+export default async function ProDetailsPage({ params }: PageProps) {
+  const { id } = await params; // 👈 هون نستعمل await
+
+  const { data: pro, error } = await supabase
+    .from("pros")
+    .select("*")
+    .eq("id", id)
+    .single();
 
   if (error || !pro) {
-    return <div className="p-4 text-red-500">المحترف غير موجود</div>;
+    notFound();
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">{pro.name}</h1>
-      <p className="mt-2 text-gray-600">{pro.bio}</p>
-      <p className="mt-2">📞 {pro.phone}</p>
-    </div>
+    <main className="max-w-3xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-4">{pro.name}</h1>
+      <p className="text-gray-700 mb-2">{pro.category}</p>
+      <p className="text-gray-600">{pro.description}</p>
+    </main>
   );
 }
