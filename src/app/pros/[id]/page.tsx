@@ -1,17 +1,12 @@
+// src/app/pros/[id]/page.tsx
 import { supabase } from "@/lib/supabaseClient";
 
-type PageProps = {
-  params: Promise<{ id: string }>; // ✅ هيك Next.js مبسوط
-};
+export default async function ProPage({ params }: { params: { id: string } }) {
+  // إذا واجهت خطأ typing مع Next15 غيّر التوقيع إلى:
+  // export default async function ProPage({ params }: { params: Promise<{id:string}> }) { const { id } = await params; ... }
+  const id = (params as any).id;
 
-export default async function ProPage({ params }: PageProps) {
-  const { id } = await params; // ✅ لازم await
-
-  const { data: pro, error } = await supabase
-    .from("pros")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data: pro, error } = await supabase.from("pros").select("*").eq("id", id).single();
 
   if (error || !pro) {
     return <div className="p-4 text-red-500">المحترف غير موجود</div>;
@@ -19,9 +14,9 @@ export default async function ProPage({ params }: PageProps) {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold">{pro.name}</h1>
-      <p className="mt-2 text-gray-600">{pro.description}</p>
-      {pro.phone && <p className="mt-2 text-gray-500">📞 {pro.phone}</p>}
+      <h1 className="text-2xl font-bold">{pro.name}</h1>
+      <p className="mt-2 text-gray-600">{pro.bio}</p>
+      <p className="mt-2">📞 {pro.phone}</p>
     </div>
   );
 }

@@ -1,66 +1,52 @@
+// src/app/create-job/page.tsx
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export default function CreateJobPage() {
+export default function CreateJobForm() {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-
-    // 1) إضافة الطلب في جدول jobs
-    const { data, error } = await supabase
-      .from("jobs")
-      .insert([{ description }])
-      .select();
-
-    if (error) {
-      console.error("Error inserting job:", error.message);
-      setLoading(false);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      const newJob = data[0];
-
-      // بعد حصول newJob
     try {
-      await fetch('/api/send-job-to-pros', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId: newJob.id }),
+      const resp = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // user_id: (if logged in),
+          title: "طلب جديد",
+          description,
+          // pro_id: optional
+        }),
       });
-    } catch (err) {
-      console.error('notify pros failed', err);
+      const j = await resp.json();
+      if (!j.ok) throw new Error(j.error || "حدث خطأ");
+      // إرسال إشعار إيميل (خيار)
+      await fetch("/api/send-new-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "test@yourmail.com",
+          jobSummary: description,
+          jobLink: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/jobs/${j.job.id}`,
+        }),
+      });
+      alert("تم إنشاء الطلب بنجاح");
+      setDescription("");
+    } catch (err: any) {
+      alert("خطأ: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    }
-      
-    setDescription("");
-    setLoading(false);
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4">
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="اكتب وصف الطلب..."
-        className="w-full border p-2 mb-4"
-      />
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        {loading ? "جارٍ الإرسال..." : "إرسال الطلب"}
+    <form onSubmit={handleSubmit} className="p-4 max-w-xl">
+      <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-2 border mb-3" placeholder="وصف الطلب..." />
+      <button disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">
+        {loading ? "جارٍ..." : "أرسل الطلب"}
       </button>
     </form>
   );
