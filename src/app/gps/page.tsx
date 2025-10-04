@@ -2,146 +2,79 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
-interface Professional {
-  id: number;
-  name: string;
-  phone: string;
-  profession: string;
-  latitude: number | null;
-  longitude: number | null;
-}
-
-function GPSPageContent() {
+function GpsPageContent() {
   const searchParams = useSearchParams();
-  const profession = searchParams.get("profession");
-
-  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const profession = searchParams?.get("profession") || "";
+  const [professionals, setProfessionals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchProfessionals = async () => {
-      if (!profession) return;
+      if (!profession || profession.trim() === "") {
+        setErrorMessage("⚠️ لم يتم تحديد المهنة.");
+        setLoading(false);
+        return;
+      }
+
+      console.log("🔍 Fetching professionals for:", profession);
 
       const { data, error } = await supabase
         .from("professionals")
         .select("id, name, phone, profession, latitude, longitude")
         .ilike("profession", `%${profession.trim()}%`);
 
-      if (error) console.error("❌ Supabase error:", error);
-      setProfessionals(data || []);
+      if (error) {
+        console.error("❌ Supabase error:", error);
+        setErrorMessage("حدث خطأ أثناء جلب البيانات من قاعدة البيانات.");
+        setLoading(false);
+        return;
+      }
+
+      console.log("📦 Supabase data:", data);
+
+      if (!data || data.length === 0) {
+        setErrorMessage("لا يوجد مهنيون في هذه المهنة حالياً.");
+      } else {
+        setProfessionals(data);
+      }
+
       setLoading(false);
     };
 
     fetchProfessionals();
   }, [profession]);
 
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      console.warn("⚠️ المتصفح لا يدعم GPS");
-      return;
-    }
+  if (loading) return <p className="text-center mt-10">جارٍ تحميل البيانات...</p>;
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        });
-        setLocationEnabled(true);
-      },
-      () => setLocationEnabled(false)
-    );
-  }, []);
-
-  const calcDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  };
-
-  const sortedProfessionals = (() => {
-    if (locationEnabled && userLocation) {
-      return [...professionals].sort((a, b) => {
-        if (!a.latitude || !a.longitude) return 1;
-        if (!b.latitude || !b.longitude) return -1;
-        const distA = calcDistance(userLocation.lat, userLocation.lon, a.latitude, a.longitude);
-        const distB = calcDistance(userLocation.lat, userLocation.lon, b.latitude, b.longitude);
-        return distA - distB;
-      });
-    } else {
-      return [...professionals].sort((a, b) => a.name.localeCompare(b.name, "ar"));
-    }
-  })();
-
-  if (loading) return <div className="text-center py-10">جاري تحميل البيانات...</div>;
+  if (errorMessage)
+    return <p className="text-center text-gray-600 mt-8">{errorMessage}</p>;
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4 text-right">
-      <h1 className="text-2xl font-bold mb-4">المهنيون في مهنة: {profession}</h1>
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        المهنيون في مجال "{profession}"
+      </h1>
 
-      {!locationEnabled && (
-        <div className="text-sm text-gray-500 mb-4">
-          ⚠️ لم يتم تفعيل الموقع الجغرافي، الترتيب حسب الاسم.
-        </div>
-      )}
-
-      {sortedProfessionals.length === 0 ? (
-        <div className="text-center text-gray-500">لا يوجد مهنيون في هذه المهنة حالياً.</div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {sortedProfessionals.map((pro) => {
-            const distance =
-              userLocation && pro.latitude && pro.longitude
-                ? calcDistance(userLocation.lat, userLocation.lon, pro.latitude, pro.longitude).toFixed(2)
-                : null;
-
-            return (
-              <div
-                key={pro.id}
-                className="p-4 bg-white border rounded-lg shadow-sm hover:shadow-md transition"
-              >
-                <div className="font-bold text-lg">{pro.name}</div>
-                <div className="text-sm text-gray-600">📞 {pro.phone}</div>
-                <div className="text-sm text-gray-500 mt-1">🛠️ {pro.profession}</div>
-
-                {distance && (
-                  <div className="text-sm text-gray-500 mt-1">
-                    📍 يبعد حوالي {distance} كم
-                  </div>
-                )}
-
-                {pro.latitude && pro.longitude && (
-                  <a
-                    href={`https://www.google.com/maps?q=${pro.latitude},${pro.longitude}`}
-                    target="_blank"
-                    className="text-blue-600 text-sm mt-2 inline-block hover:underline"
-                  >
-                    🗺️ عرض على الخريطة
-                  </a>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {professionals.map((pro) => (
+          <li key={pro.id} className="border rounded-2xl p-4 shadow-sm bg-white">
+            <h2 className="font-semibold text-lg">{pro.name}</h2>
+            <p className="text-sm text-gray-600">{pro.profession}</p>
+            <p className="text-sm text-gray-800 mt-1">📞 {pro.phone}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-export default function GPSPage() {
+export default function GpsPage() {
   return (
-    <Suspense fallback={<div className="text-center py-10">جاري تحميل الصفحة...</div>}>
-      <GPSPageContent />
+    <Suspense fallback={<p className="text-center mt-10">جاري التحميل...</p>}>
+      <GpsPageContent />
     </Suspense>
   );
 }
