@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -13,7 +13,7 @@ interface Professional {
   longitude: number | null;
 }
 
-export default function GPSPage() {
+function GPSPageContent() {
   const searchParams = useSearchParams();
   const profession = searchParams.get("profession");
 
@@ -26,24 +26,19 @@ export default function GPSPage() {
     const fetchProfessionals = async () => {
       if (!profession) return;
 
-      // 🔥 جلب المهنيين من جدول professionals
       const { data, error } = await supabase
         .from("professionals")
         .select("id, name, phone, profession, latitude, longitude")
         .eq("profession", profession.trim());
 
-      if (error) {
-        console.error("❌ Supabase error:", error);
-      } else {
-        setProfessionals(data || []);
-      }
+      if (error) console.error("❌ Supabase error:", error);
+      setProfessionals(data || []);
       setLoading(false);
     };
 
     fetchProfessionals();
   }, [profession]);
 
-  // طلب الموقع من المستخدم (اختياري)
   useEffect(() => {
     if (!navigator.geolocation) {
       console.warn("⚠️ المتصفح لا يدعم GPS");
@@ -58,14 +53,10 @@ export default function GPSPage() {
         });
         setLocationEnabled(true);
       },
-      (err) => {
-        console.log("GPS permission denied:", err.message);
-        setLocationEnabled(false);
-      }
+      () => setLocationEnabled(false)
     );
   }, []);
 
-  // 🧮 دالة لحساب المسافة بالكيلومتر
   const calcDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -78,10 +69,8 @@ export default function GPSPage() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  // 🔄 الترتيب حسب القرب أو أبجديًا
   const sortedProfessionals = (() => {
     if (locationEnabled && userLocation) {
-      // الترتيب حسب القرب
       return [...professionals].sort((a, b) => {
         if (!a.latitude || !a.longitude) return 1;
         if (!b.latitude || !b.longitude) return -1;
@@ -90,7 +79,6 @@ export default function GPSPage() {
         return distA - distB;
       });
     } else {
-      // الترتيب الأبجدي
       return [...professionals].sort((a, b) => a.name.localeCompare(b.name, "ar"));
     }
   })();
@@ -147,5 +135,13 @@ export default function GPSPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function GPSPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">جاري تحميل الصفحة...</div>}>
+      <GPSPageContent />
+    </Suspense>
   );
 }
