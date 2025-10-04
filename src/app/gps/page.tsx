@@ -29,7 +29,7 @@ function GPSPageContent() {
       const { data, error } = await supabase
         .from("professionals")
         .select("id, name, phone, profession, latitude, longitude")
-        .eq("profession", profession.trim());
+        .ilike("profession", `%${profession.trim()}%`);
 
       if (error) console.error("❌ Supabase error:", error);
       setProfessionals(data || []);
