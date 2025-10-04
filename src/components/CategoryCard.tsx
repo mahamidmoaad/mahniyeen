@@ -1,4 +1,5 @@
 // src/components/CategoryCard.tsx
+
 import Link from 'next/link'
 export default function CategoryCard({ cat }: any) {
   return (
