@@ -18,10 +18,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/request" className="hover:underline">اطلب خدمة</a>
               <a href="/dashboard/pro" className="hover:underline">لوحة المهني</a>
               <a href="/dashboard/customer" className="hover:underline">لوحة الزبون</a>
+              <a href="/gps" className="hover:underline text-blue-600 font-semibold">📍 موقعك</a> {/* أضف هذا الرابط */}
             </nav>
           </div>
         </header>
+
         <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+
         <footer className="mt-12 border-t bg-white">
           <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-gray-500">
             © {new Date().getFullYear()} المهنيّين
