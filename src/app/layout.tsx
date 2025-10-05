@@ -12,13 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-gray-50 text-gray-900">
         <header className="border-b bg-white">
           <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-            <a href="/" className="text-2xl font-bold">المهنيّين</a>
+            <a href="/" className="text-2xl font-bold">المهنيّون</a>
             <nav className="flex gap-4 text-sm">
-              <a href="/pros" className="hover:underline">المهنيون</a>
-              <a href="/request" className="hover:underline">اطلب خدمة</a>
-              <a href="/dashboard/pro" className="hover:underline">لوحة المهني</a>
-              <a href="/dashboard/customer" className="hover:underline">لوحة الزبون</a>
-              <a href="/gps" className="hover:underline text-blue-600 font-semibold">📍 موقعك</a> {/* أضف هذا الرابط */}
+              <a href="/" className="hover:underline">الرئيسية</a>
             </nav>
           </div>
         </header>
