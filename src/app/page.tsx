@@ -33,7 +33,7 @@ export default function HomePage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6 text-center">اختر مهنتك 🔧</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">اختر المهنة التي تبحث عنها 🔧</h1>
 
       <input
         type="text"
