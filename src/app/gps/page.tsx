@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useSearchParams } from "next/navigation";
 
@@ -18,9 +18,9 @@ interface Professional {
   phone?: string;
 }
 
-export default function GpsPage() {
+function GpsContent() {
   const searchParams = useSearchParams();
-  const professionFilter = searchParams.get("profession"); // المهنة المختارة من الصفحة الرئيسية
+  const professionFilter = searchParams.get("profession");
 
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,12 +28,10 @@ export default function GpsPage() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    // لازم يكون داخل useEffect حتى ما يصير hydration mismatch
     if (typeof window === "undefined") return;
 
     const fetchData = async () => {
       try {
-        // أولاً بنحاول نجيب الموقع
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -44,7 +42,7 @@ export default function GpsPage() {
             },
             (err) => {
               console.warn("⚠️ المستخدم رفض الموقع:", err.message);
-              fetchProfessionals(); // بدون موقع
+              fetchProfessionals();
             }
           );
         } else {
@@ -72,7 +70,6 @@ export default function GpsPage() {
     try {
       let query = supabase.from("professionals").select("*");
 
-      // إذا المستخدم اختار مهنة من الصفحة الرئيسية
       if (professionFilter) {
         query = query.eq("profession", professionFilter);
       }
@@ -94,7 +91,6 @@ export default function GpsPage() {
 
       let sorted = data;
 
-      // ترتيب حسب الموقع إن وُجد
       if (userLocation) {
         sorted = [...data].sort((a, b) => {
           const distA = getDistance(userLocation.lat, userLocation.lng, a.lat, a.lng);
@@ -102,7 +98,6 @@ export default function GpsPage() {
           return distA - distB;
         });
       } else {
-        // ترتيب أبجدي
         sorted = [...data].sort((a, b) => a.name.localeCompare(b.name, "ar"));
       }
 
@@ -150,10 +145,7 @@ export default function GpsPage() {
                 </p>
               )}
               {pro.phone && (
-                <a
-                  href={`tel:${pro.phone}`}
-                  className="block mt-3 text-blue-600 hover:underline"
-                >
+                <a href={`tel:${pro.phone}`} className="block mt-3 text-blue-600 hover:underline">
                   📞 الاتصال بالمهني
                 </a>
               )}
@@ -162,5 +154,13 @@ export default function GpsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function GpsPage() {
+  return (
+    <Suspense fallback={<p className="text-center mt-10 text-gray-500">جارٍ تحميل الصفحة...</p>}>
+      <GpsContent />
+    </Suspense>
   );
 }
